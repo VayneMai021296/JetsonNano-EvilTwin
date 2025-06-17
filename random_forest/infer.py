@@ -3,16 +3,30 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from cfg import *
 from data_process import process_input
 
-global monitoring 
-monitoring = True
+stop_event = threading.Event()  # Dùng event để dừng thread
 monitor_data = []
 
+# Kiểm tra GPU
+try:
+    from py3nvml import py3nvml
+    py3nvml.nvmlInit()
+    gpu_handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
+    has_gpu = True
+except:
+    has_gpu = False
+
+# --- Hàm theo dõi hệ thống ---
 def monitor_system():
-    while monitoring:
+    while not stop_event.is_set():
         cpu_percent = psutil.cpu_percent()
         memory = psutil.virtual_memory()
         ram_used_mb = memory.used / (1024 * 1024)
-        monitor_data.append((cpu_percent, ram_used_mb))
+
+        gpu_power = 0
+        if has_gpu:
+            gpu_power = py3nvml.nvmlDeviceGetPowerUsage(gpu_handle) / 1000
+
+        monitor_data.append((cpu_percent, ram_used_mb, gpu_power))
         time.sleep(1)
 
 def main():
@@ -46,7 +60,8 @@ def main():
     pred_label = knn_loaded.predict(sample_X_pca)
     end_time = time.time()
     time.sleep(5)
-    monitoring = False
+    # Stop monitor
+    stop_event.set()
     t.join()
     with open('log_train_rf.csv', mode="w", newline="") as f:
             writer = csv.writer(f)

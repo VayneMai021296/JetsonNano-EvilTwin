@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
 import json 
-
+import platform
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 def load():
@@ -49,12 +49,20 @@ def train_test_split_cus(X,y_encoded,batch_size = 512):
 
 def process_input(path_file = "capture_HUST_C7.csv", path_col ="danh_sach_cot_std.json"):
 
-    df_real = pd.read_csv(
-        path_file,
-        quotechar='"',
-        on_bad_lines='skip',
-        low_memory=False
-    )
+    if platform.system() == "Windows":
+        df_real = pd.read_csv(
+            path_file,
+            quotechar='"',
+            on_bad_lines='skip',
+            low_memory=False
+        )
+    elif platform.system() == "Linux":
+        df_real = pd.read_csv(
+            path_file,
+            quotechar='"',
+            error_bad_lines=False,
+            low_memory=False
+        )
     # Convert time to valid value 
     df_real_clone = df_real
 
