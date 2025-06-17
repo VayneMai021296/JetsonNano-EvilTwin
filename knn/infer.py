@@ -7,13 +7,22 @@ global monitoring
 monitoring = True
 monitor_data = []
 warnings.filterwarnings('ignore')
+try:
+    from py3nvml import py3nvml
+    py3nvml.nvmlInit()
+    gpu_handle = py3nvml.nvmlDeviceGetHandleByIndex(0)  # GPU 0
+    has_gpu = True
+except:
+    has_gpu = False
 
 def monitor_system():
     while monitoring:
         cpu_percent = psutil.cpu_percent()
         memory = psutil.virtual_memory()
         ram_used_mb = memory.used / (1024 * 1024)
-        monitor_data.append((cpu_percent, ram_used_mb))
+        if has_gpu:
+            gpu_power = py3nvml.nvmlDeviceGetPowerUsage(gpu_handle) / 1000
+        monitor_data.append((cpu_percent, ram_used_mb,gpu_power))
         time.sleep(1)
 
 def main():
@@ -51,7 +60,7 @@ def main():
     t.join()
     with open('log_infer_knn', mode="w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["cpu_percent", "ram_used_mb"])
+            writer.writerow(["cpu_percent", "ram_used_mb","power"])
             writer.writerows(monitor_data)
 
     pred_label_name = label_encoder.inverse_transform(pred_label)[0]

@@ -14,9 +14,11 @@ def monitor_system():
         cpu_percent = psutil.cpu_percent()
         memory = psutil.virtual_memory()
         ram_used_mb = memory.used / (1024 * 1024)
-        monitor_data.append((cpu_percent, ram_used_mb))
+
+        if has_gpu:
+            gpu_power = py3nvml.nvmlDeviceGetPowerUsage(gpu_handle) / 1000
+        monitor_data.append((cpu_percent, ram_used_mb, gpu_power))
         time.sleep(1)
-        print("ok")
 
 try:
     from py3nvml import py3nvml
@@ -51,20 +53,20 @@ def main():
         X_pca, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
     )
     
-    t = threading.Thread(target=monitor_system)
-    t.start()
-    time.sleep(5)
+    # t = threading.Thread(target=monitor_system)
+    # t.start()
+    # time.sleep(5)
     t0 = time.time()
     knn_model.fit(X_train, y_train)
     t1 = time.time()
     time.sleep(5)
 
-    monitoring = False
-    t.join()
-    with open('log_train_knn.csv', mode="w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["cpu_percent", "ram_used_mb"])
-            writer.writerows(monitor_data)
+    # monitoring = False
+    # t.join()
+    # with open('log_train_knn.csv', mode="w", newline="") as f:
+    #         writer = csv.writer(f)
+    #         writer.writerow(["cpu_percent", "ram_used_mb","power"])
+    #         writer.writerows(monitor_data)
 
     print(f'Thời gian huấn luyện: {(t1-t0)*1000} (ms)')
     joblib.dump(knn_model, 'knn_model.joblib')
