@@ -15,8 +15,6 @@ def plot_evaluation(model, X_test, y_test, model_name="Model"):
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.savefig(f"{model_name}_confusion_matrix.png",dpi=500, bbox_inches='tight')
-    
-    plt.show()
 
     # --- 2. ROC Curve ---
     fpr, tpr, thresholds = roc_curve(y_test, y_proba)
@@ -31,4 +29,3 @@ def plot_evaluation(model, X_test, y_test, model_name="Model"):
     plt.legend(loc="lower right")
     plt.grid(True)
     plt.savefig(f"{model_name}_roc.png",dpi=500, bbox_inches='tight')
-    plt.show()
