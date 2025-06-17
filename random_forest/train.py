@@ -32,7 +32,7 @@ def monitor_system():
 
 def main():
 
-    df_pca_with_label = pd.read_csv("/kaggle/working/pca.csv") 
+    df_pca_with_label = pd.read_csv("./pca.csv")
 
     # --- Random Forest ---
     rf_model = RandomForestClassifier(
