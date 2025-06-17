@@ -1,0 +1,18 @@
+[
+    "frame_minute",
+    "frame_second",
+    "wlan.fc.moredata",
+    "radiotap.timestamp.ts",
+    "wlan.duration",
+    "wlan.fc.frag",
+    "wlan.fc.retry",
+    "wlan_radio.duration",
+    "wlan_radio.signal_dbm",
+    "Label",
+    "wlan.fc.order",
+    "frame.time_delta_displayed",
+    "wlan_radio.phy",
+    "wlan.fc.subtype",
+    "wlan.fc.pwrmgt",
+    "frame.len"
+]
