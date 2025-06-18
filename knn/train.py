@@ -18,13 +18,15 @@ from plot import plot_evaluation
 
 stop_event = threading.Event()  # Dùng event để dừng thread
 monitoring_data  = []
-process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 def monitor_system(interval = 1.0):
     while not stop_event.is_set():
         line = process.stdout.readline()
         if not line:
             break
-        stats = parse_tegrastats_output(line)
+
+        line_str = line.decode('utf-8').strip()
+        stats = parse_tegrastats_output(line_str)
         monitoring_data.append(stats)
         print(stats)
         time.sleep(interval)

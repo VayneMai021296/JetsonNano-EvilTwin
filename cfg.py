@@ -37,7 +37,6 @@ import csv
 import subprocess
 import re
 
-
 def parse_tegrastats_output(line):
     ram_match = re.search(r'RAM (\d+)/(\d+)MB', line)
     cpu_match = re.findall(r'(\d+)%@', line)
