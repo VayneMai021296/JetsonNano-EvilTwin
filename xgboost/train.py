@@ -155,7 +155,6 @@ def main():
     plt.legend(loc="lower right")
     plt.grid(True)
     plt.savefig("AUC-xgb.png",dpi=500, bbox_inches='tight')
-    plt.show()
 
 if __name__ == "__mai__":
     main()

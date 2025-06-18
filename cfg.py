@@ -110,7 +110,6 @@ def plot_and_save(train_losses,val_losses,train_accuracies,val_accuracies,file_n
     
     plt.tight_layout()
     plt.savefig(file_name_figure,dpi=500, bbox_inches='tight')
-    plt.show()
 
 def train_test_split_cus(X,y_encoded,batch_size = 512, device = 'cuda'):
     # Chia dữ liệu thành tập train và test

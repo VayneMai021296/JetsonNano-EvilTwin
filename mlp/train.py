@@ -195,7 +195,6 @@ def main():
     plt.ylabel('Giá trị thực tế')
     plt.xlabel('Giá trị dự đoán')
     plt.savefig('Confusion Matrix của Multi-layer Perceptron.png', dpi=500, bbox_inches='tight')
-    plt.show()
 
     #Plot loss và accuracy
     plot_and_save(train_losses, val_losses, train_accuracies, val_accuracies, "mlp_plot.png")
