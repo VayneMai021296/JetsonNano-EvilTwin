@@ -1,6 +1,3 @@
-
-
-
 import sys, os
 import sys , os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -10,98 +7,18 @@ from cfg import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-
-def calculate_accuracy(outputs, labels): # Hàm tính Accuracy 
-    preds = (outputs >= 0.5).float()
-    correct = (preds == labels).float().sum()
-    accuracy = correct / labels.shape[0]
-    return accuracy
-
-def plot_and_save(train_losses,val_losses,train_accuracies,val_accuracies,file_name_figure = "unknow1.png"):
-    plt.figure(figsize=(12, 5))
-    
-    train_losses = torch.tensor(train_losses).cpu().numpy()
-    val_losses = torch.tensor(val_losses).cpu().numpy()
-    
-    train_accuracies = torch.tensor(train_accuracies).cpu().numpy()
-    val_accuracies = torch.tensor(val_accuracies).cpu().numpy()
-    
-    # Biểu đồ loss
-    plt.subplot(1, 2, 1)
-    plt.plot(train_losses, label='Train Loss')
-    plt.plot(val_losses, label='Validation Loss')
-    plt.title('Loss over Epochs')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.grid(True)
-    
-    # Biểu đồ accuracy
-    plt.subplot(1, 2, 2)
-    plt.plot(train_accuracies, label='Train Accuracy')
-    plt.plot(val_accuracies, label='Validation Accuracy')
-    plt.title('Accuracy over Epochs')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.grid(True)
-    
-    plt.tight_layout()
-    plt.savefig(file_name_figure,dpi=500, bbox_inches='tight')
-    plt.show()
-
-def train_test_split_cus(X,y_encoded,batch_size = 512):
-    # Chia dữ liệu thành tập train và test
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-    print("Số mẫu train:", len(X_train))
-    print("Số mẫu test:", len(X_test))
-    # Chia tập train thành train và validation (lấy 20% của tập train làm valid còn lại là train)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
-    print("Số mẫu validation:", len(X_val))
-    
-    # Chuyển dữ liệu sang Tensor
-    X_train_tensor = torch.tensor(X_train, dtype=torch.float32).to(device)
-    y_train_tensor = torch.tensor(y_train, dtype=torch.float32).view(-1, 1).to(device)
-    X_val_tensor = torch.tensor(X_val, dtype=torch.float32).to(device)
-    y_val_tensor = torch.tensor(y_val, dtype=torch.float32).view(-1, 1).to(device)
-    X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
-    y_test_tensor = torch.tensor(y_test, dtype=torch.float32).view(-1, 1).to(device)
-    
-    # Tạo DataLoader
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-    val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-    
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return train_loader, val_loader, test_loader
-
-class MLP(nn.Module):
-    def __init__(self, input_dim, dropout = 0.1):
-        super(MLP, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Linear(input_dim, 64),
-            nn.ReLU(),
-            nn.BatchNorm1d(64),
-            nn.Dropout(dropout)
-        )
-        self.layer2 = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.BatchNorm1d(32),
-            nn.Dropout(dropout)
-        )
-        self.output = nn.Linear(32, 1)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.output(x)
-        x = self.sigmoid(x)
-        return x
+stop_event = threading.Event()  # Dùng event để dừng thread
+monitoring_data  = []
+process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def monitor_system(interval = 1.0):
+    while not stop_event.is_set():
+        line = process.stdout.readline()
+        if not line:
+            break
+        line_str = line.decode('utf-8').strip()
+        stats = parse_tegrastats_output(line_str)
+        monitoring_data.append(stats)
+        time.sleep(interval)
 
 def training(model, train_loader,val_loader,
               criterion, optimizer,scheduler,warmup_scheduler,class_weights_tensor,
@@ -176,7 +93,6 @@ def training(model, train_loader,val_loader,
 
     return train_losses, train_accuracies, val_losses, val_accuracies
 
-
 def main():
     df_pca_with_label = pd.read_csv("pca.csv")
     X_pca = df_pca_with_label.drop(columns = ["Label"]).to_numpy()
@@ -189,7 +105,7 @@ def main():
     print("Classes:", label_encoder.classes_)
 
     #Chia train, val, test loader
-    train_loader, val_loader, test_loader = train_test_split_cus(X_pca,y_encoded,batch_size = 512)
+    train_loader, val_loader, test_loader = train_test_split_cus(X_pca,y_encoded,batch_size = 512, device = device)
 
     #Tính class weights
     class_weights = compute_class_weight('balanced', classes=np.unique(y_encoded), y=y_encoded)
@@ -215,11 +131,22 @@ def main():
     warmup_scheduler = LambdaLR(optimizer, lr_lambda)
 
     #Traing 
+    t = threading.Thread(target=monitor_system)
+    t.start()
+    time.sleep(5)
+    t0 =time.time()
     print("-------------------- Bắt đầu huấn luyện với mô hình MLP -------------------- ")
     train_losses, train_accuracies, val_losses, val_accuracies = training(model,train_loader, val_loader, criterion,optimizer,
                                                                         scheduler,warmup_scheduler,
-                                                                        class_weights_tensor,"best_mlp_model.pth",
+                                                                        class_weights_tensor,"mlp_model.pth",
                                                                         num_epochs = 20)
+    t1 =time.time()
+    print(f'Thời gian huấn luyện: {(t1-t0)} (seconds)')
+    time.sleep(5)
+    stop_event.set()
+    t.join()
+    process.terminate()
+    write_to_csv(monitoring_data, "log_train_mlp.csv")
     
     print("\n-------------------- Đánh giá mô hình MLP trên tập Test -------------------- ")
     # Đánh giá trên tập test
@@ -291,4 +218,3 @@ def main():
     plt.legend(loc="lower right")
     plt.grid(True)
     plt.savefig("AUC-mlp.png",dpi=500, bbox_inches='tight')
-    plt.show()

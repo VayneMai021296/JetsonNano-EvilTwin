@@ -26,7 +26,7 @@ def monitor_system(interval = 1.0):
             break
 
         line_str = line.decode('utf-8').strip()
-        stats = parse_tegrastats_output(line)
+        stats = parse_tegrastats_output(line_str)
         monitoring_data.append(stats)
         time.sleep(interval)
 
