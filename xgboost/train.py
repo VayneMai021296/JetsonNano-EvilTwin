@@ -19,7 +19,7 @@ def monitor_system(interval = 1.0):
 
 def main():
 
-    df = pd.read("pca.csv")
+    df = pd.read("scaled.csv")
     label_col = df["Label"]
     X_pca = df.drop(columns = ["Label"])
 

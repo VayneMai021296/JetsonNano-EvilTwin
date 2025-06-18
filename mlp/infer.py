@@ -4,11 +4,11 @@ import sys , os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
-from data_process import process_input
+from data_process import process_input, load_agent
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-stop_event = threading.Event()  # Dùng event để dừng thread
+stop_event = threading.Event() 
 monitoring_data  = []
 process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 def monitor_system(interval = 1.0):
@@ -26,28 +26,16 @@ def main():
                             path_col= "danh_sach_cot_std.json")
 
 
-    with open("scaler.pkl", "rb") as f:
-        scaler = pickle.load(f)
-        
-    with open("pca.pkl", "rb") as f:
-        pca = pickle.load(f)
-
-    with open("label_col.pkl", "rb") as f:
-        label_col = pickle.load(f)
-    label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(label_col)
-    print("Classes:", label_encoder.classes_)
-
+    scaler, label_encoder =  load_agent()
+    
     i = random.randint(0, df_time_cleaned.shape[0] - 1)
+    print(f"Vị trí ngẫu nhiên được dự đoán là: {i}")
     sample_df = df_time_cleaned.iloc[i:i + 1]
-
     sample_X_scaled = scaler.transform(sample_df)
-    # PCA
-    sample_X_pca = pca.transform(sample_X_scaled)
-    # Chuyển mẫu PCA sang Tensor
-    sample_X_tensor = torch.tensor(sample_X_pca, dtype=torch.float32).to(device)
+    sample_X_tensor = torch.tensor(sample_X_scaled, dtype=torch.float32).to(device)
+
     # Khởi tạo mô hình MLP
-    num_features = sample_X_pca.shape[1]
+    num_features = sample_X_scaled.shape[1]
     model = MLP(num_features).to(device)
     # Tải trọng số mô hình
     model.load_state_dict(torch.load('mlp_model.pth'))
@@ -69,14 +57,12 @@ def main():
     pred_prob = pred_prob.cpu().numpy()[0, 0]
     pred_label = 1 if pred_prob >= 0.5 else 0
     pred_label_name = label_encoder.inverse_transform([pred_label])[0]
-    # Tính thời gian inference (seconds)
     inference_time_ms = (end_time - start_time) * 1000
 
     print(f'Giá trị dự đoán: {pred_label_name}')
     print(f'Thời gian dự đoán: {inference_time_ms:.2f} ms')
 
 if __name__ =="__main__" :
-
     main()
 
 

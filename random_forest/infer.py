@@ -1,9 +1,9 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from cfg import *
-from data_process import process_input
+from data_process import process_input, load_agent
 
-stop_event = threading.Event()  # Dùng event để dừng thread
+stop_event = threading.Event() 
 monitoring_data  = []
 process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 def monitor_system(interval = 1.0):
@@ -14,45 +14,31 @@ def monitor_system(interval = 1.0):
         line_str = line.decode('utf-8').strip()
         stats = parse_tegrastats_output(line_str)
         monitoring_data.append(stats)
-        print(stats)
         time.sleep(interval)
 
 def main():
 
-    with open("scaler.pkl", "rb") as f:
-        scaler = pickle.load(f)
-    with open("pca.pkl", "rb") as f:
-        pca = pickle.load(f)
-
-    with open("label_col.pkl", "rb") as f:
-        label_col = pickle.load(f)
-
-    label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(label_col)
-    print(y_encoded)
-    
     df_cleaned = process_input(path_file = "capture_HUST_C7.csv", path_col = "danh_sach_cot_std.json")
+    scaler,label_encoder = load_agent()
+    
     i = random.randint(0, df_cleaned.shape[0]-1)
+    print(f"Vị trí ngẫu nhiên được dự đoán là: {i}")
     sample_df = df_cleaned.iloc[i:i+1]
     sample_X_scaled = scaler.transform(sample_df)
-    sample_X_pca = pca.transform(sample_X_scaled)
 
-    # Load mô hình 
     knn_loaded = joblib.load('rf_model.joblib')
 
     t = threading.Thread(target=monitor_system)
     t.start()
     time.sleep(5)
     start_time = time.time()
-    pred_label = knn_loaded.predict(sample_X_pca)
+    pred_label = knn_loaded.predict(sample_X_scaled)
     end_time = time.time()
     time.sleep(5)
-    # Stop monitor
     stop_event.set()
     t.join()
     process.terminate()
     write_to_csv(monitoring_data, "log_infer_rf.csv")
-
 
     pred_label_name = label_encoder.inverse_transform(pred_label)[0]
     inference_time_ms = (end_time - start_time) * 1000

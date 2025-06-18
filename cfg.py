@@ -111,16 +111,18 @@ def plot_and_save(train_losses,val_losses,train_accuracies,val_accuracies,file_n
     plt.tight_layout()
     plt.savefig(file_name_figure,dpi=500, bbox_inches='tight')
 
-def train_test_split_cus(X,y_encoded,batch_size = 512, device = 'cuda'):
-    # Chia dữ liệu thành tập train và test
+def train_test_split_cus(X,y_encoded, batch_size = 512, device = 'cuda'):
     X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-    print("Số mẫu train:", len(X_train))
-    print("Số mẫu test:", len(X_test))
-    # Chia tập train thành train và validation (lấy 20% của tập train làm valid còn lại là train)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
-    print("Số mẫu validation:", len(X_val))
     
-    # Chuyển dữ liệu sang Tensor
+    print("Số mẫu train:", len(X_train))
+    print("Số mẫu validation:", len(X_val))
+    print("Số mẫu test:", len(X_test))
+
+    print(f"Tỉ lệ lớp trong y_train (0/1): {np.bincount(y_train) / len(y_train)}")
+    print(f"Tỉ lệ lớp trong y_test (0/1): {np.bincount(y_test) / len(y_test)}")
+    print(f"Tỉ lệ lớp trong y_val (0/1): {np.bincount(y_val) / len(y_val)}")
+
     X_train_tensor = torch.tensor(X_train, dtype=torch.float32).to(device)
     y_train_tensor = torch.tensor(y_train, dtype=torch.float32).view(-1, 1).to(device)
     X_val_tensor = torch.tensor(X_val, dtype=torch.float32).to(device)
@@ -128,7 +130,6 @@ def train_test_split_cus(X,y_encoded,batch_size = 512, device = 'cuda'):
     X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
     y_test_tensor = torch.tensor(y_test, dtype=torch.float32).view(-1, 1).to(device)
     
-    # Tạo DataLoader
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor)

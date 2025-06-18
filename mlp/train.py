@@ -1,7 +1,5 @@
 import sys, os
-import sys , os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
 from cfg import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -94,7 +92,7 @@ def training(model, train_loader,val_loader,
     return train_losses, train_accuracies, val_losses, val_accuracies
 
 def main():
-    df_pca_with_label = pd.read_csv("pca.csv")
+    df_pca_with_label = pd.read_csv("scaled.csv")
     X_pca = df_pca_with_label.drop(columns = ["Label"]).to_numpy()
     label_col = df_pca_with_label["Label"]
 
@@ -104,15 +102,12 @@ def main():
     y_encoded = label_encoder.fit_transform(label_col)
     print("Classes:", label_encoder.classes_)
 
-    #Chia train, val, test loader
     train_loader, val_loader, test_loader = train_test_split_cus(X_pca,y_encoded,batch_size = 512, device = device)
 
-    #Tính class weights
     class_weights = compute_class_weight('balanced', classes=np.unique(y_encoded), y=y_encoded)
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
     print("Class weights:", class_weights)
 
-    #Khởi tạo mô hình
     model = MLP(input_dim = num_features, dropout = 0.35).to(device)
 
     #Đếm số lượng tham số trained và và ước lượng số lượng FLOPs
@@ -164,29 +159,24 @@ def main():
     print("\nClassification Report:")
     print(classification_report(test_labels, test_preds, target_names=[str(cls) for cls in label_encoder.classes_]))
 
-    #Confusion Matrix
     conf_matrix = confusion_matrix(test_preds, test_labels)
     print("\nMa trận nhầm lẫn:")
     print(conf_matrix)
-    #Chuyển sang định dạng numpy cho các metric
     test_preds = np.array(test_preds)
     test_labels = np.array(test_labels)
 
-    #Tính toán các chỉ số
     accuracy = accuracy_score(test_labels, test_preds)
     auc = roc_auc_score(test_labels, test_preds)
     precision = precision_score(test_labels, test_preds)
     recall = recall_score(test_labels, test_preds)
     f1 = f1_score(test_labels, test_preds)
 
-    #In ra kết quả
     print(f"\nAccuracy (Độ chính xác dự đoán tổng thể của mô hình): {accuracy:.4f}")
     print(f"AUC Score (Mức độ phân biệt 2 class của mô hình): {auc:.4f}")
     print(f"Precision (Tỷ lệ dự đoán của mô hình đối với TP (nhãn EvilTwin) ): {precision:.4f}")
     print(f"Recall (Tỷ lệ dự đoán không bỏ sót TP (nhãn EvilTwin)): {recall:.4f}")
     print(f"F1-score (Trung bình điều hoà giữa Precision và ReCall): {f1:.4f}")
 
-    #Trực quan hoá Confusion Matrix
     plt.figure(figsize=(6, 5))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
                 xticklabels=['Dự đoán Lớp Evil_Twin', 'Dự đoán Lớp Normal'],
@@ -196,9 +186,7 @@ def main():
     plt.xlabel('Giá trị dự đoán')
     plt.savefig('Confusion Matrix của Multi-layer Perceptron.png', dpi=500, bbox_inches='tight')
 
-    #Plot loss và accuracy
     plot_and_save(train_losses, val_losses, train_accuracies, val_accuracies, "mlp_plot.png")
-
 
     fpr, tpr, thresholds = roc_curve(test_labels, test_preds)
     # Tính AUC

@@ -3,7 +3,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
-from data_process import process_input
+from data_process import process_input, load_agent
 
 stop_event = threading.Event()  # Dùng event để dừng thread
 monitoring_data  = []
@@ -19,27 +19,15 @@ def monitor_system(interval = 1.0):
         time.sleep(interval)
 
 def main():
-    # Load scaler, PCA, label
-    with open("scaler.pkl", "rb") as f:
-        scaler = pickle.load(f)
-    with open("pca.pkl", "rb") as f:
-        pca = pickle.load(f)
-    with open("label_col.pkl", "rb") as f:
-        label_col = pickle.load(f)
 
-    label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(label_col)
-    print("Classes:", label_encoder.classes_)
-
-    # Tiền xử lý dữ liệu mới
     df_cleaned = process_input(path_file="capture_HUST_C7.csv", path_col="danh_sach_cot_std.json")
+    scaler,label_encoder = load_agent()
+
     i = random.randint(0, df_cleaned.shape[0] - 1)
+    print(f"Vị trí ngẫu nhiên được dự đoán là: {i}")
     sample_df = df_cleaned.iloc[i:i + 1]
 
     sample_X_scaled = scaler.transform(sample_df)
-    sample_X_pca = pca.transform(sample_X_scaled)
-
-    # Load mô hình
     knn_loaded = joblib.load('knn_model.joblib')
 
     # Start monitor
@@ -47,7 +35,7 @@ def main():
     t.start()
     time.sleep(5)
     start_time = time.time()
-    pred_label = knn_loaded.predict(sample_X_pca)
+    pred_label = knn_loaded.predict(sample_X_scaled)
     end_time = time.time()
     time.sleep(5)
     stop_event.set()

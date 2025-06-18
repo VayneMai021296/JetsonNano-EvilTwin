@@ -40,7 +40,7 @@ def main():
 
     print("\n-------------------- Huấn luyện mô hình KNN --------------------")
 
-    df_pca_with_label = pd.read_csv("./pca.csv")
+    df_pca_with_label = pd.read_csv("scaled.csv")
     X_pca = df_pca_with_label.drop(columns=["Label"]).to_numpy()
     label_col = df_pca_with_label["Label"]
 

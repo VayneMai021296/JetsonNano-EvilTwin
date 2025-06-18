@@ -19,7 +19,7 @@ def monitor_system(interval = 1.0):
 
 def main():
 
-    df_pca_with_label = pd.read_csv("./pca.csv")
+    df_pca_with_label = pd.read_csv("scaled.csv")
 
     # --- Random Forest ---
     rf_model = RandomForestClassifier(
