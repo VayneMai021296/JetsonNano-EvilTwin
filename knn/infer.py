@@ -1,46 +1,23 @@
-import sys, os, time, warnings, pickle, random, csv, threading, psutil, joblib
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
-# Thêm đường dẫn thư mục cha
+import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
 from data_process import process_input
 
-warnings.filterwarnings('ignore')
-
-# Sử dụng Event để dừng thread an toàn
-stop_event = threading.Event()
-monitor_data = []
-
-# Kiểm tra GPU
-try:
-    from py3nvml import py3nvml
-    py3nvml.nvmlInit()
-    gpu_handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
-    has_gpu = True
-except:
-    has_gpu = False
-
-# Hàm theo dõi tài nguyên
-def monitor_system():
+stop_event = threading.Event()  # Dùng event để dừng thread
+monitoring_data  = []
+process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def monitor_system(interval = 1.0):
     while not stop_event.is_set():
-        cpu_percent = psutil.cpu_percent()
-        memory = psutil.virtual_memory()
-        ram_used_mb = memory.used / (1024 * 1024)
+        line = process.stdout.readline()
+        if not line:
+            break
+        stats = parse_tegrastats_output(line)
+        monitoring_data.append(stats)
+        print(stats)
+        time.sleep(interval)
 
-        gpu_power = 0
-        if has_gpu:
-            try:
-                gpu_power = py3nvml.nvmlDeviceGetPowerUsage(gpu_handle) / 1000
-            except:
-                gpu_power = 0  # Tránh crash nếu có lỗi khi đọc GPU
-
-        monitor_data.append((cpu_percent, ram_used_mb, gpu_power))
-        time.sleep(1)
-
-# Hàm chính
 def main():
     # Load scaler, PCA, label
     with open("scaler.pkl", "rb") as f:
@@ -68,23 +45,16 @@ def main():
     # Start monitor
     t = threading.Thread(target=monitor_system)
     t.start()
-    time.sleep(2)
-
-    # Inference
+    time.sleep(5)
     start_time = time.time()
     pred_label = knn_loaded.predict(sample_X_pca)
     end_time = time.time()
-
-    # Stop monitor
+    time.sleep(5)
     stop_event.set()
     t.join()
-
-    # Ghi log
-    with open('log_infer_knn.csv', mode="w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["cpu_percent", "ram_used_mb", "power"])
-        writer.writerows(monitor_data)
-
+    process.terminate()
+    write_to_csv(monitoring_data, "log_infer_knn.csv")
+    
     pred_label_name = label_encoder.inverse_transform(pred_label)[0]
     inference_time_ms = (end_time - start_time) * 1000
 

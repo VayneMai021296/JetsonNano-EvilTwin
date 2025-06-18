@@ -5,30 +5,17 @@ from cfg import *
 from plot import plot_evaluation
 
 stop_event = threading.Event()  # Dùng event để dừng thread
-monitor_data = []
-
-# Kiểm tra GPU
-try:
-    from py3nvml import py3nvml
-    py3nvml.nvmlInit()
-    gpu_handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
-    has_gpu = True
-except:
-    has_gpu = False
-
-# --- Hàm theo dõi hệ thống ---
-def monitor_system():
+monitoring_data  = []
+process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def monitor_system(interval = 1.0):
     while not stop_event.is_set():
-        cpu_percent = psutil.cpu_percent()
-        memory = psutil.virtual_memory()
-        ram_used_mb = memory.used / (1024 * 1024)
-
-        gpu_power = 0
-        if has_gpu:
-            gpu_power = py3nvml.nvmlDeviceGetPowerUsage(gpu_handle) / 1000
-
-        monitor_data.append((cpu_percent, ram_used_mb, gpu_power))
-        time.sleep(1)
+        line = process.stdout.readline()
+        if not line:
+            break
+        stats = parse_tegrastats_output(line)
+        monitoring_data.append(stats)
+        print(stats)
+        time.sleep(interval)
 
 def main():
 
@@ -64,11 +51,9 @@ def main():
     # Stop monitor
     stop_event.set()
     t.join()
-    with open('log_train_rf.csv', mode="w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["cpu_percent", "ram_used_mb"])
-            writer.writerows(monitor_data)
-
+    process.terminate()
+    write_to_csv(monitoring_data,"log_train_rf.csv")
+   
 
     print(f'Thời gian huấn luyện: {(t1-t0)*1000} (ms)')
     joblib.dump(rf_model, 'rf_model.joblib')

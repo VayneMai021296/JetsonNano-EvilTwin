@@ -34,3 +34,39 @@ from sklearn.ensemble import RandomForestClassifier
 import psutil
 import threading
 import csv
+import subprocess
+import re
+
+
+def parse_tegrastats_output(line):
+    ram_match = re.search(r'RAM (\d+)/(\d+)MB', line)
+    cpu_match = re.findall(r'(\d+)%@', line)
+    gpu_match = re.search(r'GR3D_FREQ (\d+)%', line)
+
+    ram_used = int(ram_match.group(1)) if ram_match else None
+    ram_total = int(ram_match.group(2)) if ram_match else None
+    cpu_usages = list(map(int, cpu_match[:4])) if cpu_match else [0, 0, 0, 0]
+    avg_cpu = sum(cpu_usages) / len(cpu_usages)
+    gpu_usage = int(gpu_match.group(1)) if gpu_match else None
+
+    return {
+        "Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "RAM Used (MB)": ram_used,
+        "RAM Total (MB)": ram_total,
+        "CPU Core 0 (%)": cpu_usages[0],
+        "CPU Core 1 (%)": cpu_usages[1],
+        "CPU Core 2 (%)": cpu_usages[2],
+        "CPU Core 3 (%)": cpu_usages[3],
+        "Average CPU Usage (%)": avg_cpu,
+        "GPU Usage (%)": gpu_usage
+    }
+
+def write_to_csv(data, filename="jetson_monitor_log.csv"):
+    if not data:
+        return
+    fieldnames = data[0].keys()
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data)
+    print(f"Dữ liệu đã được lưu vào: {filename}")
