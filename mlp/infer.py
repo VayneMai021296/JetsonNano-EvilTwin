@@ -25,7 +25,6 @@ def main():
     df_time_cleaned = process_input(path_file = "capture_HUST_C7.csv",
                             path_col= "danh_sach_cot_std.json")
 
-
     scaler, label_encoder =  load_agent()
     
     i = random.randint(0, df_time_cleaned.shape[0] - 1)
@@ -64,6 +63,3 @@ def main():
 
 if __name__ =="__main__" :
     main()
-
-
-

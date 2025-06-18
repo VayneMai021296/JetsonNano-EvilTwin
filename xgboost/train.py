@@ -97,19 +97,17 @@ def main():
     print("\n-------------------- Đánh giá mô hình XGBoost trên tập Test -------------------- ")
 
     y_pred_encoded = xgb_classifier.predict(X_test)
-    # Dự đoán xác suất cho lớp dương (lớp 1, tương ứng với label_encoder.classes_[1])
-    y_pred_proba = xgb_classifier.predict_proba(X_test)[:, 1]
 
     # **BƯỚC QUAN TRỌNG: CHUYỂN ĐỔI y_test VÀ y_pred TRỞ LẠI NHÃN GỐC**
     y_test_original = label_encoder.inverse_transform(y_test)
     y_pred_original = label_encoder.inverse_transform(y_pred_encoded)
 
     #Tính toán các chỉ số
-    accuracy = accuracy_score(y_test_original, y_pred_original)
-    auc = roc_auc_score(y_test_original, y_pred_original)
-    precision = precision_score(y_test_original, y_pred_original)
-    recall = recall_score(y_test_original, y_pred_original)
-    f1 = f1_score(y_test_original, y_pred_original)
+    accuracy = accuracy_score(y_test, y_pred_encoded)
+    auc = roc_auc_score(y_test, y_pred_encoded)
+    precision = precision_score(y_test, y_pred_encoded)
+    recall = recall_score(y_test, y_pred_encoded)
+    f1 = f1_score(y_test, y_pred_encoded)
 
     #In ra kết quả
     print(f"\nAccuracy (Độ chính xác dự đoán tổng thể của mô hình): {accuracy:.4f}")
@@ -137,10 +135,10 @@ def main():
     plt.savefig('Confusion Matrix của XGBoost.png', dpi=500, bbox_inches='tight') 
     
     # AUC-ROC
-
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred_original)
+    
+    fpr, tpr, thresholds = roc_curve(y_test, y_pred_encoded)
     # Tính AUC
-    auc_score = roc_auc_score(y_test, y_pred_original)
+    auc_score = roc_auc_score(y_test, y_pred_encoded)
 
     # Vẽ biểu đồ ROC
     plt.figure(figsize=(6, 6))
