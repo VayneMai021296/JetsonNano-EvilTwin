@@ -19,12 +19,15 @@ def monitor_system(interval = 1.0):
 
 def main():
 
-    df = pd.read("scaled.csv")
+    df = pd.read_csv("scaled.csv")
     label_col = df["Label"]
     X_pca = df.drop(columns = ["Label"])
 
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(label_col)
+    with open("label_encoder.pkl", "wb") as f:
+        pickle.dump(label_encoder, f)
+
     X_train, X_test, y_train, y_test = train_test_split(X_pca, y_encoded, test_size=0.2, random_state=42,stratify=y_encoded)
     print("Số mẫu train:", len(X_train))
     print("Số mẫu test:", len(X_test))

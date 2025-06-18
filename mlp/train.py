@@ -100,6 +100,8 @@ def main():
 
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(label_col)
+    with open("label_encoder.pkl", "wb") as f:
+        pickle.dump(label_encoder, f)
     print("Classes:", label_encoder.classes_)
 
     train_loader, val_loader, test_loader = train_test_split_cus(X_pca,y_encoded,batch_size = 512, device = device)

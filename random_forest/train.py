@@ -32,10 +32,12 @@ def main():
     print("\n-------------------- Huấn luyện mô hình Random Forest --------------------")
     X_pca = df_pca_with_label.drop(columns = ["Label"]).to_numpy()
     label_col = df_pca_with_label["Label"]
-    num_features = X_pca.shape[1]
+
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(label_col)
     print("Classes:", label_encoder.classes_)
+    with open("label_encoder.pkl", "wb") as f:
+        pickle.dump(label_encoder, f)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X_pca, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
@@ -53,15 +55,11 @@ def main():
     t.join()
     process.terminate()
     write_to_csv(monitoring_data,"log_train_rf.csv")
-   
 
     print(f'Thời gian huấn luyện: {(t1-t0)*1000} (ms)')
     joblib.dump(rf_model, 'rf_model.joblib')
 
-    # Dự đoán
     y_pred_rf = rf_model.predict(X_test)
-
-    # Đánh giá
     print("\n====== ĐÁNH GIÁ MÔ HÌNH RANDOM FOREST ======")
     print(f"Accuracy : {accuracy_score(y_test, y_pred_rf):.4f}")
     print(f"Precision: {precision_score(y_test, y_pred_rf):.4f}")

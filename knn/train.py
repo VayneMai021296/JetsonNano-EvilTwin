@@ -46,7 +46,9 @@ def main():
 
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(label_col)
-
+    with open("label_encoder.pkl", "wb") as f:
+        pickle.dump(label_encoder, f)
+        
     X_train, X_test, y_train, y_test = train_test_split(
         X_pca, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
     )
