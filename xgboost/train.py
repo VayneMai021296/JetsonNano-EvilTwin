@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
 
-stop_event = threading.Event()  # Dùng event để dừng thread
+stop_event = threading.Event()  
 monitoring_data  = []
 process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 def monitor_system(interval = 1.0):
