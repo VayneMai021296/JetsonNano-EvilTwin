@@ -36,7 +36,6 @@ import threading
 import csv
 import subprocess
 import re
-from xgboost import XGBClassifier
 
 def parse_tegrastats_output(line):
     ram_match = re.search(r'RAM (\d+)/(\d+)MB', line)

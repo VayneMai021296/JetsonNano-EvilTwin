@@ -4,6 +4,8 @@ import sys , os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
+from xgboost import XGBClassifier
+
 from data_process import process_input,load_agent
 
 stop_event = threading.Event() 
