@@ -82,8 +82,6 @@ def main():
     t0 = time.time()
     xgb_classifier.fit(X_train, y_train,
                     eval_set=[(X_test, y_test)], 
-                    early_stopping_rounds=20, 
-                    eval_metric="logloss"  , 
                     verbose=True)              
     print("-------------------- Kết thúc quá trình huấn luyện mô hình --------------------")
     # Số lượng cây thực tế được huấn luyện sau early stopping
