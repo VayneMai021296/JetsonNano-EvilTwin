@@ -207,3 +207,6 @@ def main():
     plt.legend(loc="lower right")
     plt.grid(True)
     plt.savefig("AUC-mlp.png",dpi=500, bbox_inches='tight')
+
+if __name__ =="__main__":
+    main()
