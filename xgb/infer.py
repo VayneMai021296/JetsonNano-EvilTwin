@@ -5,13 +5,12 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from cfg import *
 from xgboost import XGBClassifier
-
 from data_process import process_input,load_agent
 
 stop_event = threading.Event() 
 monitoring_data  = []
 process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-def monitor_system(interval = 1.0):
+def monitor_system(interval = 0.1):
     while not stop_event.is_set():
         line = process.stdout.readline()
         if not line:

@@ -8,7 +8,7 @@ from xgboost import XGBClassifier
 stop_event = threading.Event()  
 monitoring_data  = []
 process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-def monitor_system(interval = 1.0):
+def monitor_system(interval = 0.1):
     while not stop_event.is_set():
         line = process.stdout.readline()
         if not line:
@@ -158,7 +158,7 @@ def main():
     plt.grid(True)
     plt.savefig("AUC-xgb.png",dpi=500, bbox_inches='tight')
 
-if __name__ == "__mai__":
+if __name__ == "__main__":
     main()
 
 
