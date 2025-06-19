@@ -137,6 +137,7 @@ def main():
     plt.xlabel('Giá trị dự đoán')
     plt.savefig('Confusion Matrix của XGBoost.png', dpi=500, bbox_inches='tight') 
     
+    # Độ quan
     # AUC-ROC
     
     fpr, tpr, thresholds = roc_curve(y_test, y_pred_encoded)
@@ -156,6 +157,22 @@ def main():
     plt.legend(loc="lower right")
     plt.grid(True)
     plt.savefig("AUC-xgb.png",dpi=500, bbox_inches='tight')
+
+    print("\n-------------------- Độ quan trọng của các thuộc tính với mô hình XGboost -------------------- ")
+    importance_dict = xgb_classifier.get_booster().get_score(importance_type='gain')
+
+    # Chuyển sang DataFrame và sắp xếp
+    importance_df = pd.DataFrame(importance_dict.items(), columns=['Feature', 'Importance'])
+    importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+    # Vẽ biểu đồ
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=importance_df.head(20), x='Importance', y='Feature', palette='viridis')
+    plt.title('Top Feature Importances (by Gain)')
+    plt.xlabel('Gain')
+    plt.ylabel('Feature')
+    plt.tight_layout()
+    plt.savefig("xgb-Importances.png",dpi=500, bbox_inches='tight')
 
 if __name__ == "__main__":
     main()
