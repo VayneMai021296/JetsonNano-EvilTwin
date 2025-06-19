@@ -33,7 +33,7 @@ def process_input(path_file = "capture_HUST_C7.csv", path_col ="danh_sach_cot_st
         df_real = pd.read_csv(
             path_file,
             quotechar='"',
-            error_bad_lines=False,
+            on_bad_lines='skip',
             low_memory=False
         )
     df_real_clone = df_real
